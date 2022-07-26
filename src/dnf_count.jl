@@ -53,13 +53,8 @@ a₅ = [1, 1, 1, 1]
 """
 The number of variables in the Formula F 
 """
-numberOfVars(F) = maximum((x -> maximum(abs, x)), F)
+get_n(F) = maximum((x -> maximum(abs, x)), F)
 
-@testset "numberOfVars" begin
-    @test numberOfVars(F₁) == 3
-    @test numberOfVars(F₂) == 4
-    @test numberOfVars(F₃) == 2
-end
 
 
 """
@@ -81,21 +76,13 @@ function eval(F, a)
     return false    
 end
 
-@testset "eval" begin
-    @test eval(F₁, a₁) == false
-    @test eval(F₁, a₂) == true
-    @test eval(F₁, a₃) == false
-    @test eval(F₁, a₄) == false
-    @test eval(F₁, a₅) == true
-end
-
 
 
 """
 Compute the number of satisfying assignment by exhaustive enumeration. (Exponential Runtime) 
 """
 function exhaustiveEnumeration(F)
-    n = numberOfVars(F)
+    n = get_n(F)
     sat_F = 0
     for i in 0:2^n-1 
         a = digits(i, base=2, pad=n)
@@ -106,9 +93,5 @@ function exhaustiveEnumeration(F)
     return sat_F
 end
 
-@testset "exhaustiveEnumeration" begin
-    @test exhaustiveEnumeration(F₁) == 4
-    @test exhaustiveEnumeration(F₂) == 7
-    @test exhaustiveEnumeration(F₃) == 3
-end
+
 
