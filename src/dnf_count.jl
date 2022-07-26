@@ -1,4 +1,5 @@
 using Test
+using Random: bitrand
 
 """
 Given a DNF Formula F = C₁ ∨ C₂ ∨ … ∨ Cₘ where m is the number of clauses
@@ -44,38 +45,40 @@ a₄ = [0, 0, 1, 1]
 a₅ = [1, 1, 1, 1]
 
 
-# parameters
-ϵ = 0.01
-δ = 0.01
-
-
-
 """
 The number of variables in the Formula F 
 """
 get_n(F) = maximum((x -> maximum(abs, x)), F)
 
-
+"""
+The number of clauses in F 
+"""
+get_m(F) = length(F)
 
 """
 Evaluate F(a) in linear time 
 """
 function eval(F, a)
     for C in F      # try to find a satisfied clause
-        violated_C = false
-        for L in C
-            if a[abs(L)] != 1 - (L < 0)
-                violated_C = true 
-                break  # literal L violated hence the clause C is not satisfied
-            end
-        end  
-        if !violated_C 
-            return true  # no violatoin in clause C hence F is satisfied
+        if evalClause(C, a) 
+            return true
         end
     end
     return false    
 end
 
+"""
+Evaluate C(a)
+"""
+function evalClause(C, a)
+    violated_C = false
+    for L in C
+        if a[abs(L)] != 1 - (L < 0)
+            return false # literal L violated hence the clause C is not satisfied
+        end
+    end  
+    return true
+end
 
 
 """
@@ -94,4 +97,95 @@ function exhaustiveEnumeration(F)
 end
 
 
+"""
+Run the Monte Carlo Approximation algorithm
+"""
+function approx(F, ϵ, δ)
+    N = ceil(4 / ϵ^2 * log(2/δ) * get_m(F))
+    n = get_n(F)
+    m = get_m(F)
+    clause_length = map(length, F) # comptue the length of each clause 
+    
+    clause_sat_assignments = map(x -> 2^(n-x), clause_length) 
+    p = clause_sat_assignments / sum(clause_sat_assignments)  # comptue the probability for each clause to be drawn 
+    p_sum = p           # p_sum makes it easyer to draw a clause according to the probabilities 
+    for i in 2:m
+        p_sum[i] += p_sum[i-1]
+    end 
 
+    # Monte Carlo
+    S = 0
+    U = sum(clause_sat_assignments)
+
+    for i in 1:N
+        
+        # draw a clause with probabilities proportional to the number of satisfying assignments 
+        random = rand()
+        j = 1       
+        while random > p_sum[j]
+            j += 1
+        end
+        
+        # generate uniformly at random a satisfying assignment for the j-th clause
+        a = bitrand(n)
+        for l in F[j]
+            a[abs(l)] = 1 - (l < 0)
+        end 
+
+        # check if there is earlyer clause also satisfied by a 
+        canonical = true    
+        for k in 1:(j-1)
+            if evalClause(F[k], a)
+                canonical = false   
+                break
+            end
+        end
+        if canonical
+            S += 1
+        end
+    end
+    sat = (S/N) * U
+    return sat
+end
+
+
+
+"""
+Generate a random DNF formula
+"""
+function randomF(n, m)
+    rand(1:n)
+    F = Array[]
+    for i in 1:m
+        C = Int64[]
+        for j in 1:rand(1:n)
+            x = rand(-n:n)
+            if !(x in C || -x in C) && x != 0
+                append!(C, x)
+            end 
+        end
+        if length(C) != 0
+            append!(F, [C])
+        end
+    end
+    return F
+end
+
+
+
+
+# Demo 
+F = randomF(20, 10)
+
+println("Running exhaustiveEnumeration")
+determinitic = exhaustiveEnumeration(F)
+
+ϵ = 0.01
+δ = 0.01
+println("Running approx")
+approximation = approx(F, ϵ, δ)
+
+Δₐ= abs(determinitic - approximation)
+Δᵣ = Δₐ / determinitic
+
+println("Determinitic: $determinitic   Approximation: $approximation   Δₐ=$Δₐ  Δᵣ=$Δᵣ")
