@@ -37,13 +37,6 @@ F₂ = [[-1, 2, -3], [-4, 2, 1], [2, 3]]
 F₃ = [[1, 2], [-2]] 
 
 
-# example assignments
-a₁ = [0, 0, 0, 0]
-a₂ = [1, 0, 1, 0]
-a₃ = [1, 1, 0, 0]
-a₄ = [0, 0, 1, 1]
-a₅ = [1, 1, 1, 1]
-
 
 """
 The number of variables in the Formula F 
@@ -178,14 +171,14 @@ end
 F = randomF(20, 10)
 
 println("Running exhaustiveEnumeration")
-determinitic = exhaustiveEnumeration(F)
+deterministic = exhaustiveEnumeration(F)
 
 ϵ = 0.01
 δ = 0.01
 println("Running approx")
 approximation = approx(F, ϵ, δ)
 
-Δₐ= abs(determinitic - approximation)
-Δᵣ = Δₐ / determinitic
+Δₐ= abs(deterministic - approximation)
+Δᵣ = Δₐ / deterministic
 
-println("Determinitic: $determinitic   Approximation: $approximation   Δₐ=$Δₐ  Δᵣ=$Δᵣ")
+println("Deterministic: $deterministic   Approximation: $approximation   Δₐ=$Δₐ  Δᵣ=$Δᵣ")
